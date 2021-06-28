@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Libreria</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+   
+</head>
+<body class="bg-dark ">
+    
+    <header>
+        <nav>
+            <ul class="nav">
+                <li class="nav-item">
+                    <a class="nav-brand nav-link" href="../../index.html">Amanda Bookstore</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../../index.html">Inicio</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#">Libros</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#">Contactos</a>
+                </li>
+              </ul>
+        </nav>
+    </header>
+    <main class="container-fluid" style="min-height: calc(100vh - 40px);">
+
+        <br>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col" class="text-warning">
+                        Imagen
+                      
+                    </th>
+                    <th scope="col" class="text-warning">
+                        Titulo
+                    </th>
+                    <th colspan="2" scope="col" class="text-warning">
+                        status
+                    </th>
+                    
+                </tr>
+            </thead>
+            <tbody id="table-body">
+            </tbody>
+        </table>
+
+    </main>
+
+    <footer class="text-danger">
+        Pongame 100
+    </footer>
+
+
+    <script defer>
+        const headers = new Headers();
+        headers.append("x-api-key", "60d9015fdbec4f317df07104");
+        headers.append("content-type", "application/json")
+
+        const requestOptions = {
+            method: 'GET',
+            headers: headers
+        };
+
+        async function init() {
+            try{
+                const get = await fetch('https://libros-1164.restdb.io/rest/libros', requestOptions);
+                const books = await get.json();
+                paintBooks(books);
+            } catch(err) {
+                console.error(err);
+            }
+        }
+
+        function paintBooks(books) {
+            const getContainer = document.querySelector('#table-body');
+            books.forEach(book => {
+                const tr = document.createElement('tr');
+                tr.id = "parent-" + book._id;
+                const img = document.createElement('img');
+                img.src = './../../img/books/' + book.Libros.replaceAll(' ', '-').replaceAll('ñ', 'n') + '.jpg';
+                img.style.width = '100px';
+                const tdImg = document.createElement('td');
+                tdImg.appendChild(img);
+
+                const tdTitle = document.createElement('td');
+                tdTitle.className = 'align-middle';
+                const h4 = document.createElement('h4');
+                h4.className = 'text-primary';
+                h4.textContent = book.Libros;
+                tdTitle.appendChild(h4);
+
+                const tdStatus = document.createElement('td');
+                const span = document.createElement('span');
+                span.id = "child-" +book._id;
+                span.className = `text-${book.status === 'DISPONIBLE' ? 'success' : 'danger'}`;
+                span.textContent = book.status;
+
+                tdStatus.className = 'align-middle';
+                tdStatus.appendChild(span);
+
+                const tdAction = document.createElement('td');
+                const button = document.createElement('button');
+                button.id = "button-" + book._id;
+
+                button.addEventListener('click', (e) => {
+                    putObject(book._id);
+                })
+
+                button.className = 'btn btn-primary';
+                button.textContent = "Solicitar";
+                button.disabled = book.status !== 'DISPONIBLE';
+                if(button.disabled) button.className += ' disabled'
+                tdAction.className = 'align-middle';
+                tdAction.appendChild(button);
+
+                tr.appendChild(tdImg);
+                tr.appendChild(tdTitle);
+                tr.appendChild(tdStatus);
+                tr.appendChild(tdAction)
+                getContainer.appendChild(tr);
+            });
+        }
+
+        async function putObject(objectId) {
+            const status = document.querySelector(`#child-${objectId}`);
+            if(status.textContent === 'NO DISPONIBLE') return;
+
+            try{
+                const newRequest = {...requestOptions};
+                
+                newRequest.method = 'PUT';
+                newRequest.body = JSON.stringify({
+                    status: 'NO DISPONIBLE'
+                });
+
+                const get = await fetch(`https://libros-1164.restdb.io/rest/libros/${objectId}`, newRequest);
+                const books = await get.json();
+                status.textContent = 'NO DISPONIBLE';
+                status.className = 'text-danger';
+                const button = document.querySelector(`#button-${objectId}`);
+                button.disabled = true;
+                button.className += ' disabled';
+                const randomNumber = parseInt(Math.random() * 1_000_000_000);
+                alert('Su número de prestamo es: ' + randomNumber.toString(16) + "\n" + "Recuerde que automaticamente pasen 2 horas, el libro volverá a su estante");
+            } catch(err) {
+                console.error(err);
+            }
+
+        }
+
+        init()
+
+    </script>
+    
+
+</body>
+</html>
